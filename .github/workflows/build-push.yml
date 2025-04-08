@@ -1,5 +1,5 @@
 ---
-name: Build and push docker images
+name: Build and push docker image
 
 env:
   GITHUB_REPOSITORY: socratec/traccar
