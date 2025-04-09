@@ -66,6 +66,10 @@ jobs:
             _GITHUB_IMAGE_PLATFORMS+=",linux/arm/v7"
           fi
           echo "GITHUB_IMAGE_PLATFORMS=$_GITHUB_IMAGE_PLATFORMS" >> $GITHUB_ENV
+      - name: Debug GITHUB_IMAGE_TAGS
+        run: |
+          echo "Tags: $GITHUB_IMAGE_TAGS"
+          env | grep GITHUB_IMAGE_TAGS
       - name: Build and push
         if: env.GITHUB_IMAGE_TAGS != ''
         uses: docker/build-push-action@v6
