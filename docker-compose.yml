@@ -63,7 +63,7 @@ services:
       - TRACCAR_DB_PASSWORD=traccar_password  # Match with POSTGRES_PASSWORD
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.traccar.rule=Host(`traccar.socratec.gmbh`)"  # Replace with your domain
+      - "traefik.http.routers.traccar.rule=Host(`smc.socratec.gmbh`)"  # Replace with your domain
       - "traefik.http.routers.traccar.entrypoints=websecure"
       - "traefik.http.routers.traccar.tls.certresolver=myresolver"
       - "traefik.http.services.traccar.loadbalancer.server.port=8082"  # Traccar web interface port
