@@ -39,19 +39,20 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
       - name: Set environment GITHUB_IMAGE_TAGS on master
         if: github.ref == 'refs/heads/master' && matrix.os == 'alpine'
-        run: echo "GITHUB_IMAGE_TAGS=$GITHUB_REPOSITORY:latest" >> $GITHUB_ENV
+        run: echo "GITHUB_IMAGE_TAGS=ghcr.io/${GITHUB_REPOSITORY}:latest" >> $GITHUB_ENV
       - name: Set environment GITHUB_IMAGE_TAGS
         if: github.ref != 'refs/heads/master'
         run: |
           _BRANCH=${GITHUB_REF##*/}
           _VERSION=${_BRANCH#v*}
           _MAJOR_VERSION=${_VERSION%.*}
-          _GITHUB_IMAGE_TAGS="$GITHUB_REPOSITORY:$_VERSION-${{ matrix.os }}"
-          _GITHUB_IMAGE_TAGS+=",$GITHUB_REPOSITORY:$_MAJOR_VERSION-${{ matrix.os }}"
-          _GITHUB_IMAGE_TAGS+=",$GITHUB_REPOSITORY:${{ matrix.os }}"
+          _BASE_TAG="ghcr.io/${GITHUB_REPOSITORY}"
+          _GITHUB_IMAGE_TAGS="$_BASE_TAG:$_VERSION-${{ matrix.os }}"
+          _GITHUB_IMAGE_TAGS+=",$_BASE_TAG:$_MAJOR_VERSION-${{ matrix.os }}"
+          _GITHUB_IMAGE_TAGS+=",$_BASE_TAG:${{ matrix.os }}"
           if [ "${{ matrix.os }}" == "alpine" ]; then
-            _GITHUB_IMAGE_TAGS+=",$GITHUB_REPOSITORY:$_VERSION"
-            _GITHUB_IMAGE_TAGS+=",$GITHUB_REPOSITORY:$_MAJOR_VERSION"
+            _GITHUB_IMAGE_TAGS+=",$_BASE_TAG:$_VERSION"
+            _GITHUB_IMAGE_TAGS+=",$_BASE_TAG:$_MAJOR_VERSION"
           fi
           echo "GITHUB_IMAGE_TAGS=$_GITHUB_IMAGE_TAGS" >> $GITHUB_ENV
       - name: Set environment GITHUB_IMAGE_PLATFORMS
@@ -69,3 +70,4 @@ jobs:
           tags: ${{ env.GITHUB_IMAGE_TAGS }}
           platforms: ${{ env.GITHUB_IMAGE_PLATFORMS }}
           push: true
+
