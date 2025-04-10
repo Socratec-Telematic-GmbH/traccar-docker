@@ -7,6 +7,8 @@ services:
       - "80:80"    # HTTP
       - "443:443"  # HTTPS
       - "8080:8080" # Traefik dashboard
+      - "5055:5055" # Traccar Teltonika protocol
+      - "5027:5027" # Traccar H02 protoco
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - traefik-data:/etc/traefik
@@ -16,6 +18,8 @@ services:
       - "--providers.docker.exposedbydefault=false"
       - "--entrypoints.web.address=:80"
       - "--entrypoints.websecure.address=:443"
+      - "--entrypoints.traccar-teltonika.address=:5055"  # New TCP entrypoint for 5055
+      - "--entrypoints.traccar-h02.address=:5027"       # New TCP entrypoint for 5027
       - "--entrypoints.web.http.redirections.entryPoint.to=websecure"
       - "--entrypoints.web.http.redirections.entryPoint.scheme=https"
       - "--certificatesresolvers.myresolver.acme.tlschallenge=true"
@@ -67,7 +71,14 @@ services:
       - "traefik.http.routers.traccar.entrypoints=websecure"
       - "traefik.http.routers.traccar.tls.certresolver=myresolver"
       - "traefik.http.services.traccar.loadbalancer.server.port=8082"  # Traccar web interface port
-
+      # TCP router for Teltonika (5055)
+      - "traefik.tcp.routers.traccar-teltonika.rule=HostSNI(`*`)"
+      - "traefik.tcp.routers.traccar-teltonika.entrypoints=traccar-teltonika"
+      - "traefik.tcp.services.traccar-teltonika.loadbalancer.server.port=5055"
+      # TCP router for H02 (5027)
+      - "traefik.tcp.routers.traccar-h02.rule=HostSNI(`*`)"
+      - "traefik.tcp.routers.traccar-h02.entrypoints=traccar-h02"
+      - "traefik.tcp.services.traccar-h02.loadbalancer.server.port=5027"
 volumes:
   traefik-data:
   postgres-data:
