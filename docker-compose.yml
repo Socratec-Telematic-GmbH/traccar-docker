@@ -18,16 +18,16 @@ services:
       - "--providers.docker.exposedbydefault=false"
       - "--entrypoints.web.address=:80"
       - "--entrypoints.websecure.address=:443"
-      - "--entrypoints.traccar-teltonika.address=:5055"  # New TCP entrypoint for 5055
-      - "--entrypoints.traccar-h02.address=:5027"       # New TCP entrypoint for 5027
+      - "--entrypoints.traccar-teltonika.address=:5055"
+      - "--entrypoints.traccar-h02.address=:5027"
       - "--entrypoints.web.http.redirections.entryPoint.to=websecure"
       - "--entrypoints.web.http.redirections.entryPoint.scheme=https"
       - "--certificatesresolvers.myresolver.acme.tlschallenge=true"
-      - "--certificatesresolvers.myresolver.acme.email=c.morgenthaler@morgenthaler-de.com"  # Replace with your email
+      - "--certificatesresolvers.myresolver.acme.email=c.morgenthaler@morgenthaler-de.com"
       - "--certificatesresolvers.myresolver.acme.storage=/etc/traefik/acme.json"
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.traefik.rule=Host(`ingress.socratec.gmbh`)"  # Replace with your domain
+      - "traefik.http.routers.traefik.rule=Host(`ingress.socratec.gmbh`)"
       - "traefik.http.routers.traefik.entrypoints=websecure"
       - "traefik.http.routers.traefik.tls.certresolver=myresolver"
       - "traefik.http.routers.traefik.service=api@internal"
@@ -38,7 +38,7 @@ services:
     restart: unless-stopped
     environment:
       - POSTGRES_USER=traccar
-      - POSTGRES_PASSWORD=traccar_password  # Change this to a secure password
+      - POSTGRES_PASSWORD=traccar_password
       - POSTGRES_DB=traccar
     volumes:
       - postgres-data:/var/lib/postgresql/data
@@ -64,23 +64,23 @@ services:
       - TRACCAR_DB_PORT=5432
       - TRACCAR_DB_NAME=traccar
       - TRACCAR_DB_USER=traccar
-      - TRACCAR_DB_PASSWORD=traccar_password  # Match with POSTGRES_PASSWORD
+      - TRACCAR_DB_PASSWORD=traccar_password
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.traccar.rule=Host(`smc.socratec.gmbh`)"  # Replace with your domain
+      - "traefik.http.routers.traccar.rule=Host(`smc.socratec.gmbh`)"
       - "traefik.http.routers.traccar.entrypoints=websecure"
       - "traefik.http.routers.traccar.tls.certresolver=myresolver"
-      - "traefik.http.routers.traccar.service=traccar-web"  # Explicitly name the HTTP service
+      - "traefik.http.routers.traccar.service=traccar-web"
       - "traefik.http.services.traccar-web.loadbalancer.server.port=8082"
       # TCP router and service for Teltonika (5055)
       - "traefik.tcp.routers.traccar-teltonika.rule=HostSNI(`*`)"
       - "traefik.tcp.routers.traccar-teltonika.entrypoints=traccar-teltonika"
-      - "traefik.tcp.routers.traccar-teltonika.service=traccar-teltonika-svc"  # Explicitly link to service
+      - "traefik.tcp.routers.traccar-teltonika.service=traccar-teltonika-svc"
       - "traefik.tcp.services.traccar-teltonika-svc.loadbalancer.server.port=5055"
       # TCP router and service for H02 (5027)
       - "traefik.tcp.routers.traccar-h02.rule=HostSNI(`*`)"
       - "traefik.tcp.routers.traccar-h02.entrypoints=traccar-h02"
-      - "traefik.tcp.routers.traccar-h02.service=traccar-h02-svc"  # Explicitly link to service
+      - "traefik.tcp.routers.traccar-h02.service=traccar-h02-svc"
       - "traefik.tcp.services.traccar-h02-svc.loadbalancer.server.port=5027"
 volumes:
   traefik-data:
