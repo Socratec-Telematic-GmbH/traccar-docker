@@ -70,15 +70,18 @@ services:
       - "traefik.http.routers.traccar.rule=Host(`smc.socratec.gmbh`)"  # Replace with your domain
       - "traefik.http.routers.traccar.entrypoints=websecure"
       - "traefik.http.routers.traccar.tls.certresolver=myresolver"
-      - "traefik.http.services.traccar.loadbalancer.server.port=8082"  # Traccar web interface port
-      # TCP router for Teltonika (5055)
+      - "traefik.http.routers.traccar.service=traccar-web"  # Explicitly name the HTTP service
+      - "traefik.http.services.traccar-web.loadbalancer.server.port=8082"
+      # TCP router and service for Teltonika (5055)
       - "traefik.tcp.routers.traccar-teltonika.rule=HostSNI(`*`)"
       - "traefik.tcp.routers.traccar-teltonika.entrypoints=traccar-teltonika"
-      - "traefik.tcp.services.traccar-teltonika.loadbalancer.server.port=5055"
-      # TCP router for H02 (5027)
+      - "traefik.tcp.routers.traccar-teltonika.service=traccar-teltonika-svc"  # Explicitly link to service
+      - "traefik.tcp.services.traccar-teltonika-svc.loadbalancer.server.port=5055"
+      # TCP router and service for H02 (5027)
       - "traefik.tcp.routers.traccar-h02.rule=HostSNI(`*`)"
       - "traefik.tcp.routers.traccar-h02.entrypoints=traccar-h02"
-      - "traefik.tcp.services.traccar-h02.loadbalancer.server.port=5027"
+      - "traefik.tcp.routers.traccar-h02.service=traccar-h02-svc"  # Explicitly link to service
+      - "traefik.tcp.services.traccar-h02-svc.loadbalancer.server.port=5027"
 volumes:
   traefik-data:
   postgres-data:
