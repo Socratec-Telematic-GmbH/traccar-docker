@@ -56,7 +56,9 @@ services:
       postgres:
         condition: service_healthy
     ports:
-      - "5001-5100:5001-5100"
+      - "5001-5026:5001-5026"
+      - "5028-5054:5028-5054"
+      - "5056-5100:5056-5100"
     volumes:
       - traccar-config:/opt/traccar/conf
       - traccar-data:/opt/traccar/data
