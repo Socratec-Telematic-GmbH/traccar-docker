@@ -9,6 +9,7 @@ services:
       - "8080:8080" # Traefik dashboard
       - "5055:5055" # Traccar Teltonika protocol
       - "5027:5027" # Traccar H02 protoco
+      - "5001-5100:5001-5100" # Traccar additional protocols
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - traefik-data:/etc/traefik
@@ -20,6 +21,7 @@ services:
       - "--entrypoints.websecure.address=:443"
       - "--entrypoints.traccar-teltonika.address=:5055"
       - "--entrypoints.traccar-h02.address=:5027"
+      - "--entrypoints.traccar-protocols.address=:5001-5100"
       - "--entrypoints.web.http.redirections.entryPoint.to=websecure"
       - "--entrypoints.web.http.redirections.entryPoint.scheme=https"
       - "--certificatesresolvers.myresolver.acme.tlschallenge=true"
@@ -82,6 +84,11 @@ services:
       - "traefik.tcp.routers.traccar-h02.entrypoints=traccar-h02"
       - "traefik.tcp.routers.traccar-h02.service=traccar-h02-svc"
       - "traefik.tcp.services.traccar-h02-svc.loadbalancer.server.port=5027"
+      # TCP router and service for additional protocols (5001-5100)
+      - "traefik.tcp.routers.traccar-protocols.rule=HostSNI(`*`)"
+      - "traefik.tcp.routers.traccar-protocols.entrypoints=traccar-protocols"
+      - "traefik.tcp.routers.traccar-protocols.service=traccar-protocols-svc"
+      - "traefik.tcp.services.traccar-protocols-svc.loadbalancer.server.port=5001-5100"
 volumes:
   traefik-data:
   postgres-data:
