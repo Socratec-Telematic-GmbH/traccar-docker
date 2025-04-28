@@ -86,11 +86,6 @@ services:
       - "traefik.tcp.routers.traccar-h02.entrypoints=traccar-h02"
       - "traefik.tcp.routers.traccar-h02.service=traccar-h02-svc"
       - "traefik.tcp.services.traccar-h02-svc.loadbalancer.server.port=5027"
-      # TCP router and service for additional protocols (5001-5100)
-      - "traefik.tcp.routers.traccar-protocols.rule=HostSNI(`*`)"
-      - "traefik.tcp.routers.traccar-protocols.entrypoints=traccar-protocols"
-      - "traefik.tcp.routers.traccar-protocols.service=traccar-protocols-svc"
-      - "traefik.tcp.services.traccar-protocols-svc.loadbalancer.server.port=5001-5100"
 volumes:
   traefik-data:
   postgres-data:
