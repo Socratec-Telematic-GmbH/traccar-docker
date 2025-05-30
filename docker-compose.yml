@@ -6,6 +6,7 @@ services:
     ports:
       - "80:80"    # HTTP
       - "443:443"  # HTTPS
+      - "1883:1883" # MQTT
       - "8080:8080" # Traefik dashboard
       - "5055:5055" # Traccar Teltonika protocol
       - "5027:5027" # Traccar H02 protoco
@@ -20,6 +21,7 @@ services:
       - "--entrypoints.websecure.address=:443"
       - "--entrypoints.traccar-teltonika.address=:5055"
       - "--entrypoints.traccar-h02.address=:5027"
+      - "--entrypoints.traccar-mqtt.address=:1883"
       - "--entrypoints.web.http.redirections.entryPoint.to=websecure"
       - "--entrypoints.web.http.redirections.entryPoint.scheme=https"
       - "--certificatesresolvers.myresolver.acme.tlschallenge=true"
@@ -86,6 +88,11 @@ services:
       - "traefik.tcp.routers.traccar-h02.entrypoints=traccar-h02"
       - "traefik.tcp.routers.traccar-h02.service=traccar-h02-svc"
       - "traefik.tcp.services.traccar-h02-svc.loadbalancer.server.port=5027"
+      # MQTT (1883)
+      - "traefik.tcp.routers.traccar-mqtt.rule=HostSNI(`*`)"
+      - "traefik.tcp.routers.traccar-mqtt.entrypoints=traccar-h02"
+      - "traefik.tcp.routers.traccar-mqtt.service=traccar-h02-svc"
+      - "traefik.tcp.services.traccar-mqtt-svc.loadbalancer.server.port=1883"
 volumes:
   traefik-data:
   postgres-data:
