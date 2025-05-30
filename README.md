@@ -1,7 +1,7 @@
 Traccar in Docker
 ---
 
-**Traccar GPS Tracking System in Docker image.**
+**Traccar GPS Tracking System in Docker image**
 
 Official website: <https://www.traccar.org>  
 DockerHub image: <https://hub.docker.com/r/traccar/traccar> ![](https://img.shields.io/docker/stars/traccar/traccar) ![](https://img.shields.io/docker/pulls/traccar/traccar)  
