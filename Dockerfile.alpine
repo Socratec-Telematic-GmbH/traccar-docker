@@ -1,17 +1,17 @@
 FROM alpine:3.21
 
-ENV TRACCAR_VERSION=7.2
+ENV TRACCAR_VERSION=7.3
 
 WORKDIR /opt/traccar
 
 RUN set -ex; \
-    apk add --no-cache --no-progress \
-      openjdk17-jre-headless \
-      wget; \
-    wget -qO /tmp/traccar.zip https://github.com/Socratec-Telematic-GmbH/traccar/releases/download/v$TRACCAR_VERSION/traccar-other-v$TRACCAR_VERSION.zip; \
-    unzip -qo /tmp/traccar.zip -d /opt/traccar; \
-    rm /tmp/traccar.zip; \
-    apk del wget
+  apk add --no-cache --no-progress \
+  openjdk17-jre-headless \
+  wget; \
+  wget -qO /tmp/traccar.zip https://github.com/Socratec-Telematic-GmbH/traccar/releases/download/v$TRACCAR_VERSION/traccar-other-v$TRACCAR_VERSION.zip; \
+  unzip -qo /tmp/traccar.zip -d /opt/traccar; \
+  rm /tmp/traccar.zip; \
+  apk del wget
 
 ENTRYPOINT ["java", "-Xms1g", "-Xmx1g", "-Djava.net.preferIPv4Stack=true"]
 
