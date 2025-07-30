@@ -111,11 +111,12 @@ services:
       - "traefik.tcp.routers.traccar-h02.entrypoints=traccar-h02"
       - "traefik.tcp.routers.traccar-h02.service=traccar-h02-svc"
       - "traefik.tcp.services.traccar-h02-svc.loadbalancer.server.port=5027"
+      
   traccar-forwarder:
     image: ghcr.io/socratec-telematic-gmbh/traccar-forwarder:latest
     container_name: traccar-forwarder
     restart: unless-stopped
-  depends_on:
+    depends_on:
       traccar:
         condition: service_healthy 
     volumes:
@@ -123,6 +124,7 @@ services:
       - ./state:/app/state
     environment:
       - ASPNETCORE_ENVIRONMENT=Production
+      
 volumes:
   traefik-data:
   postgres-data:
