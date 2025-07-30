@@ -89,11 +89,11 @@ services:
       - TRACCAR_DB_USER=traccar
       - TRACCAR_DB_PASSWORD=traccar_password
     healthcheck:
-      test: [ "CMD", "wget", "-q", "--spider", "http://localhost:8082/api/health" ]
-      interval: 2m
+      test: ["CMD-SHELL", "if [ $$(cat /proc/uptime | cut -d' ' -f1 | cut -d'.' -f1) -gt 30 ]; then exit 0; else exit 1; fi"]
+      interval: 10s
       timeout: 5s
-      start_period: 1h
       retries: 3
+      start_period: 15s
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.traccar.rule=Host(`smc.socratec.gmbh`)"
