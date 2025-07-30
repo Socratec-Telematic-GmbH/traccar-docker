@@ -88,6 +88,12 @@ services:
       - TRACCAR_DB_NAME=traccar
       - TRACCAR_DB_USER=traccar
       - TRACCAR_DB_PASSWORD=traccar_password
+    healthcheck:
+      test: ["CMD-SHELL", "nc -z localhost 5027 || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.traccar.rule=Host(`smc.socratec.gmbh`)"
@@ -109,9 +115,9 @@ services:
     image: ghcr.io/socratec-telematic-gmbh/traccar-forwarder:latest
     container_name: traccar-forwarder
     restart: unless-stopped
-    depends_on:
-      postgres:
-        condition: service_healthy
+  depends_on:
+      traccar:
+        condition: service_healthy 
     volumes:
       - ./appsettings.json:/app/appsettings.json:ro
       - ./state:/app/state
