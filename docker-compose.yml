@@ -49,7 +49,19 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
-
+      
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: pgadmin4_container
+    restart: always
+    ports:
+      - "8888:80"
+    environment:
+      PGADMIN_DEFAULT_EMAIL: user-name@domain-name.com
+      PGADMIN_DEFAULT_PASSWORD: strong-password
+    volumes:
+      - pgadmin-data:/var/lib/pgadmin
+      
   traccar:
     image: ghcr.io/socratec-telematic-gmbh/traccar-docker:latest
     container_name: traccar
@@ -94,12 +106,24 @@ services:
       #- "traefik.tcp.routers.traccar-mqtt.entrypoints=traccar-h02"
       #- "traefik.tcp.routers.traccar-mqtt.service=traccar-h02-svc"
       #- "traefik.tcp.services.traccar-mqtt-svc.loadbalancer.server.port=1883"
+  traccar-forwarder:
+    image: ghcr.io/socratec-telematic-gmbh/traccar-forwarder:latest
+    container_name: traccar-forwarder
+    restart: unless-stopped
+    volumes:
+      - traccar-forwarder-conf:/app/appsettings.json
+      - traccar-forwarder-state:/app/state
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
 volumes:
   traefik-data:
   postgres-data:
   traccar-config:
   traccar-data:
   traccar-logs:
+  traccar-forwarder-conf:
+  traccar-forwarder-state:
+  pgadmin-data:
 
 networks:
   default:
