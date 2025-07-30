@@ -54,17 +54,15 @@ services:
     image: dpage/pgadmin4
     container_name: pgadmin4_container
     restart: always
-    ports:
-      - "8081:80"
     environment:
       PGADMIN_DEFAULT_EMAIL: user-name@domain-name.com
       PGADMIN_DEFAULT_PASSWORD: strong-password
     labels:
-      # PG Admin (8888)
+      # PG Admin (8081:80)
       - "traefik.tcp.routers.traccar-pgadmin.rule=HostSNI(`*`)"
       - "traefik.tcp.routers.traccar-pgadmin.entrypoints=traccar-pg"
       - "traefik.tcp.routers.traccar-pgadmin.service=traccar-pg-svc"
-      - "traefik.tcp.services.traccar-pgadmin-svc.loadbalancer.server.port=8081"
+      - "traefik.tcp.services.traccar-pgadmin-svc.loadbalancer.server.port=80"
     volumes:
       - pgadmin-data:/var/lib/pgadmin
       
@@ -107,15 +105,13 @@ services:
       - "traefik.tcp.routers.traccar-h02.entrypoints=traccar-h02"
       - "traefik.tcp.routers.traccar-h02.service=traccar-h02-svc"
       - "traefik.tcp.services.traccar-h02-svc.loadbalancer.server.port=5027"
-      # MQTT (1883)
-      #- "traefik.tcp.routers.traccar-mqtt.rule=HostSNI(`*`)"
-      #- "traefik.tcp.routers.traccar-mqtt.entrypoints=traccar-h02"
-      #- "traefik.tcp.routers.traccar-mqtt.service=traccar-h02-svc"
-      #- "traefik.tcp.services.traccar-mqtt-svc.loadbalancer.server.port=1883"
   traccar-forwarder:
     image: ghcr.io/socratec-telematic-gmbh/traccar-forwarder:latest
     container_name: traccar-forwarder
     restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
     volumes:
       - ./appsettings.json:/app/appsettings.json:ro
       - ./state:/app/state
