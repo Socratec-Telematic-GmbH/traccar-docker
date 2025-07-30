@@ -6,7 +6,7 @@ services:
     ports:
       - "80:80"    # HTTP
       - "443:443"  # HTTPS
-      - "8888:8888" # PG Admin
+      - "8081:8081" # PG Admin
       - "8080:8080" # Traefik dashboard
       - "5055:5055" # Traccar Teltonika protocol
       - "5027:5027" # Traccar H02 protoco
@@ -21,7 +21,7 @@ services:
       - "--entrypoints.websecure.address=:443"
       - "--entrypoints.traccar-teltonika.address=:5055"
       - "--entrypoints.traccar-h02.address=:5027"
-      - "--entrypoints.traccar-pgadmin.address=:8888"
+      - "--entrypoints.traccar-pgadmin.address=:8081"
       - "--entrypoints.web.http.redirections.entryPoint.to=websecure"
       - "--entrypoints.web.http.redirections.entryPoint.scheme=https"
       - "--certificatesresolvers.myresolver.acme.tlschallenge=true"
@@ -55,7 +55,7 @@ services:
     container_name: pgadmin4_container
     restart: always
     ports:
-      - "8888:80"
+      - "8081:80"
     environment:
       PGADMIN_DEFAULT_EMAIL: user-name@domain-name.com
       PGADMIN_DEFAULT_PASSWORD: strong-password
@@ -64,7 +64,7 @@ services:
       - "traefik.tcp.routers.traccar-pgadmin.rule=HostSNI(`*`)"
       - "traefik.tcp.routers.traccar-pgadmin.entrypoints=traccar-pg"
       - "traefik.tcp.routers.traccar-pgadmin.service=traccar-pg-svc"
-      - "traefik.tcp.services.traccar-pgadmin-svc.loadbalancer.server.port=8888"
+      - "traefik.tcp.services.traccar-pgadmin-svc.loadbalancer.server.port=8081"
     volumes:
       - pgadmin-data:/var/lib/pgadmin
       
