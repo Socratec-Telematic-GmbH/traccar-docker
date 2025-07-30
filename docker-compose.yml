@@ -61,7 +61,7 @@ services:
       - "1883:1883"
       - "5001-5026:5001-5026"
       - "5028-5054:5028-5054"
-      - "5056-5100:5056-5100"
+      - "5056-5200:5056-5200"
     volumes:
       - traccar-config:/opt/traccar/conf
       - traccar-data:/opt/traccar/data
