@@ -6,7 +6,6 @@ services:
     ports:
       - "80:80"    # HTTP
       - "443:443"  # HTTPS
-      - "8081:8081" # PG Admin
       - "8080:8080" # Traefik dashboard
       - "5055:5055" # Traccar Teltonika protocol
       - "5027:5027" # Traccar H02 protoco
@@ -55,14 +54,14 @@ services:
     container_name: pgadmin4_container
     restart: always
     environment:
-      PGADMIN_DEFAULT_EMAIL: user-name@domain-name.com
-      PGADMIN_DEFAULT_PASSWORD: strong-password
-    labels:
-      # PG Admin (8081:80)
-      - "traefik.tcp.routers.traccar-pgadmin.rule=HostSNI(`*`)"
-      - "traefik.tcp.routers.traccar-pgadmin.entrypoints=traccar-pg"
-      - "traefik.tcp.routers.traccar-pgadmin.service=traccar-pg-svc"
-      - "traefik.tcp.services.traccar-pgadmin-svc.loadbalancer.server.port=80"
+      PGADMIN_DEFAULT_EMAIL: admin@socratec.gmbh
+      PGADMIN_DEFAULT_PASSWORD: traccar_password
+  labels:
+    - "traefik.enable=true"
+    - "traefik.http.routers.pgadmin.rule=Host(`pgadmin.socratec.gmbh`)"
+    - "traefik.http.routers.pgadmin.entrypoints=websecure"
+    - "traefik.http.routers.pgadmin.tls.certresolver=myresolver"
+    - "traefik.http.services.pgadmin.loadbalancer.server.port=80"
     volumes:
       - pgadmin-data:/var/lib/pgadmin
       
@@ -89,11 +88,11 @@ services:
       - TRACCAR_DB_USER=traccar
       - TRACCAR_DB_PASSWORD=traccar_password
     healthcheck:
-      test: ["CMD-SHELL", "if [ $$(cat /proc/uptime | cut -d' ' -f1 | cut -d'.' -f1) -gt 30 ]; then exit 0; else exit 1; fi"]
+      test: ["CMD-SHELL", "if [ $$(cat /proc/uptime | cut -d' ' -f1 | cut -d'.' -f1) -gt 60 ]; then exit 0; else exit 1; fi"]
       interval: 10s
       timeout: 5s
       retries: 3
-      start_period: 15s
+      start_period: 75s
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.traccar.rule=Host(`smc.socratec.gmbh`)"
