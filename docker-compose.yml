@@ -54,7 +54,7 @@ services:
     container_name: pgadmin4_container
     restart: always
     environment:
-      PGADMIN_DEFAULT_EMAIL: c.morgenthaler@morgenthaler-de.com
+      PGADMIN_DEFAULT_EMAIL: admin@socratec.gmbh
       PGADMIN_DEFAULT_PASSWORD: traccar_password
     labels:
       - "traefik.enable=true"
