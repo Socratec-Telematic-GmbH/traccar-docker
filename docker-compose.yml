@@ -33,44 +33,48 @@ services:
       - "traefik.http.routers.traefik.tls.certresolver=myresolver"
       - "traefik.http.routers.traefik.service=api@internal"
 
-  postgres:
-    image: postgres:15
-    container_name: traccar-postgres
+  mariadb:
+    image: mariadb:11
+    container_name: traccar-mariadb
     restart: unless-stopped
     environment:
-      - POSTGRES_USER=traccar
-      - POSTGRES_PASSWORD=traccar_password
-      - POSTGRES_DB=traccar
+      - MARIADB_ROOT_PASSWORD=traccar_root_password
+      - MARIADB_DATABASE=traccar
+      - MARIADB_USER=traccar
+      - MARIADB_PASSWORD=traccar_password
+      - MARIADB_AUTO_UPGRADE=1
+    command: [
+      "--character-set-server=utf8mb4",
+      "--collation-server=utf8mb4_unicode_ci",
+      "--innodb-file-per-table=1"
+    ]
     volumes:
-      - postgres-data:/var/lib/postgresql/data
+      - mariadb-data:/var/lib/mysql
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U traccar"]
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost -u$$MARIADB_USER -p$$MARIADB_PASSWORD --silent"]
       interval: 10s
       timeout: 5s
-      retries: 5
+      retries: 10
       
-  pgadmin:
-    image: dpage/pgadmin4
-    container_name: pgadmin4_container
-    restart: always
+  adminer:
+    image: adminer:latest
+    container_name: adminer
+    restart: unless-stopped
     environment:
-      PGADMIN_DEFAULT_EMAIL: admin@socratec.gmbh
-      PGADMIN_DEFAULT_PASSWORD: traccar_password
+      - ADMINER_DEFAULT_SERVER=mariadb
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.pgadmin.rule=Host(`pgadmin.socratec.gmbh`)"
+      - "traefik.http.routers.pgadmin.rule=Host(`adminer.socratec.gmbh`)"
       - "traefik.http.routers.pgadmin.entrypoints=websecure"
       - "traefik.http.routers.pgadmin.tls.certresolver=myresolver"
-      - "traefik.http.services.pgadmin.loadbalancer.server.port=80"
-    volumes:
-      - pgadmin-data:/var/lib/pgadmin
+      - "traefik.http.services.pgadmin.loadbalancer.server.port=8080"
       
   traccar:
     image: ghcr.io/socratec-telematic-gmbh/traccar-docker:latest
     container_name: traccar
     restart: unless-stopped
     depends_on:
-      postgres:
+      mariadb:
         condition: service_healthy
     ports:
       - "1883:1883"
@@ -82,8 +86,8 @@ services:
       - traccar-data:/opt/traccar/data
       - traccar-logs:/opt/traccar/logs
     environment:
-      - TRACCAR_DB_HOST=postgres
-      - TRACCAR_DB_PORT=5432
+      - TRACCAR_DB_HOST=mariadb
+      - TRACCAR_DB_PORT=3306
       - TRACCAR_DB_NAME=traccar
       - TRACCAR_DB_USER=traccar
       - TRACCAR_DB_PASSWORD=traccar_password
@@ -111,26 +115,25 @@ services:
       - "traefik.tcp.routers.traccar-h02.service=traccar-h02-svc"
       - "traefik.tcp.services.traccar-h02-svc.loadbalancer.server.port=5027"
       
-  traccar-forwarder:
-    image: ghcr.io/socratec-telematic-gmbh/traccar-forwarder:latest
-    container_name: traccar-forwarder
-    restart: unless-stopped
-    depends_on:
-      traccar:
-        condition: service_healthy 
-    volumes:
-      - ./appsettings.json:/app/appsettings.json:ro
-      - ./state:/app/state
-    environment:
-      - ASPNETCORE_ENVIRONMENT=Production
+#  traccar-forwarder:
+#   image: ghcr.io/socratec-telematic-gmbh/traccar-forwarder:latest
+#    container_name: traccar-forwarder
+#    restart: unless-stopped
+#    depends_on:
+#      traccar:
+#        condition: service_healthy 
+#    volumes:
+#      - ./appsettings.json:/app/appsettings.json:ro
+#      - ./state:/app/state
+#    environment:
+#      - ASPNETCORE_ENVIRONMENT=Production
       
 volumes:
   traefik-data:
-  postgres-data:
+  mariadb-data:
   traccar-config:
   traccar-data:
   traccar-logs:
-  pgadmin-data:
 
 networks:
   default:
