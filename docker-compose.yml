@@ -34,8 +34,7 @@ services:
       - "traefik.http.routers.traefik.service=api@internal"
 
   mariadb:
-    image: mariadb:11
-    container_name: traccar-mariadb
+    image: mariadb:latest
     restart: unless-stopped
     environment:
       - MARIADB_ROOT_PASSWORD=traccar_root_password
@@ -52,14 +51,12 @@ services:
     volumes:
       - mariadb-data:/var/lib/mysql
     healthcheck:
-      test:
-        [
-          "CMD-SHELL",
-          "mysqladmin ping -h localhost -u$$MARIADB_USER -p$$MARIADB_PASSWORD --silent",
-        ]
-      interval: 10s
-      timeout: 5s
-      retries: 10
+        test: [ "CMD", "healthcheck.sh", "--connect", "--innodb_initialized" ]
+        start_period: 1m
+        start_interval: 10s
+        interval: 1m
+        timeout: 5s
+        retries: 3
 
   adminer:
     image: adminer:latest
