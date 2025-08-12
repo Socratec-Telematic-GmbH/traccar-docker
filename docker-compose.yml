@@ -130,7 +130,7 @@ services:
       - "traefik.tcp.services.traccar-xXX-svc.loadbalancer.server.port=5080"
 
   traccar-forwarder:
-   image: ghcr.io/socratec-telematic-gmbh/traccar-forwarder:latest
+    image: ghcr.io/socratec-telematic-gmbh/traccar-forwarder:latest
     container_name: traccar-forwarder
     restart: unless-stopped
     depends_on:
