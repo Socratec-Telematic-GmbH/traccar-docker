@@ -9,6 +9,7 @@ services:
       - "8080:8080" # Traefik dashboard
       - "5055:5055" # Traccar Teltonika protocol
       - "5027:5027" # Traccar H02 protoco
+      - "5080:5080" # Traccar xXX protoco
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - traefik-data:/etc/traefik
@@ -20,6 +21,7 @@ services:
       - "--entrypoints.websecure.address=:443"
       - "--entrypoints.traccar-teltonika.address=:5055"
       - "--entrypoints.traccar-h02.address=:5027"
+      - "--entrypoints.traccar-xXX.address=:5080"
       - "--entrypoints.traccar-pgadmin.address=:8081"
       - "--entrypoints.web.http.redirections.entryPoint.to=websecure"
       - "--entrypoints.web.http.redirections.entryPoint.scheme=https"
@@ -82,7 +84,8 @@ services:
       - "1883:1883"
       - "5001-5026:5001-5026"
       - "5028-5054:5028-5054"
-      - "5056-5200:5056-5200"
+      - "5056-5079:5056-5079"
+      - "5081-5200:5081-5200"
     volumes:
       - traccar-config:/opt/traccar/conf
       - traccar-data:/opt/traccar/data
@@ -120,19 +123,24 @@ services:
       - "traefik.tcp.routers.traccar-h02.entrypoints=traccar-h02"
       - "traefik.tcp.routers.traccar-h02.service=traccar-h02-svc"
       - "traefik.tcp.services.traccar-h02-svc.loadbalancer.server.port=5027"
+      # TCP router and service for xXX (5080)
+      - "traefik.tcp.routers.traccar-xXX.rule=HostSNI(`*`)"
+      - "traefik.tcp.routers.traccar-xXX.entrypoints=traccar-xXX"
+      - "traefik.tcp.routers.traccar-xXX.service=traccar-xXX-svc"
+      - "traefik.tcp.services.traccar-xXX-svc.loadbalancer.server.port=5080"
 
-#  traccar-forwarder:
-#   image: ghcr.io/socratec-telematic-gmbh/traccar-forwarder:latest
-#    container_name: traccar-forwarder
-#    restart: unless-stopped
-#    depends_on:
-#      traccar:
-#        condition: service_healthy
-#    volumes:
-#      - ./appsettings.json:/app/appsettings.json:ro
-#      - ./state:/app/state
-#    environment:
-#      - ASPNETCORE_ENVIRONMENT=Production
+  traccar-forwarder:
+   image: ghcr.io/socratec-telematic-gmbh/traccar-forwarder:latest
+    container_name: traccar-forwarder
+    restart: unless-stopped
+    depends_on:
+      traccar:
+        condition: service_healthy
+    volumes:
+      - ./appsettings.json:/app/appsettings.json:ro
+      - ./state:/app/state
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
 
 volumes:
   traefik-data:
