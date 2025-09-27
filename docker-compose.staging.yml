@@ -67,7 +67,7 @@ services:
     container_name: adminer-staging
     restart: unless-stopped
     environment:
-      - ADMINER_DEFAULT_SERVER=mariadb
+      - ADMINER_DEFAULT_SERVER=mariadb-staging
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.pgadmin-staging.rule=Host(`${PGADMIN_HOST}`)"
@@ -80,7 +80,7 @@ services:
     container_name: traccar-staging
     restart: unless-stopped
     depends_on:
-      mariadb:
+      mariadb-staging:
         condition: service_healthy
     # Device ports (mirror prod, excluding ports handled by Traefik)
     ports:
@@ -137,7 +137,7 @@ services:
     container_name: traccar-forwarder-staging
     restart: unless-stopped
     depends_on:
-      traccar:
+      traccar-staging:
         condition: service_healthy
     volumes:
       - ./appsettings.staging.json:/app/appsettings.json:ro
