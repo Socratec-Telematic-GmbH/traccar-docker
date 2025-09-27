@@ -1,0 +1,154 @@
+services:
+  traefik:
+    image: traefik:v2.10
+    container_name: traefik-prod
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+      # Device protocol ports
+      - "5055:5055"  # Teltonika
+      - "5027:5027"  # H02
+      - "5080:5080"  # xXX
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - traefik-data-prod:/etc/traefik
+    command:
+      - "--api.dashboard=true"
+      - "--api.insecure=false"
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--entrypoints.web.address=:80"
+      - "--entrypoints.websecure.address=:443"
+      - "--entrypoints.traccar-teltonika.address=:5055"
+      - "--entrypoints.traccar-h02.address=:5027"
+      - "--entrypoints.traccar-xXX.address=:5080"
+      - "--entrypoints.web.http.redirections.entryPoint.to=websecure"
+      - "--entrypoints.web.http.redirections.entryPoint.scheme=https"
+      - "--certificatesresolvers.${ACME_RESOLVER}.acme.tlschallenge=true"
+      - "--certificatesresolvers.${ACME_RESOLVER}.acme.email=${ACME_EMAIL}"
+      - "--certificatesresolvers.${ACME_RESOLVER}.acme.storage=${ACME_STORAGE}"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.traefik-prod.rule=Host(`${TRAEFIK_DASHBOARD_HOST}`)"
+      - "traefik.http.routers.traefik-prod.entrypoints=websecure"
+      - "traefik.http.routers.traefik-prod.tls.certresolver=${ACME_RESOLVER}"
+      - "traefik.http.routers.traefik-prod.service=api@internal"
+      - "traefik.http.routers.traefik-prod.middlewares=traefik-auth"
+      - "traefik.http.middlewares.traefik-auth.basicauth.users=${TRAEFIK_DASHBOARD_USERS}"
+
+  mariadb:
+    image: mariadb:latest
+    container_name: mariadb-prod
+    restart: unless-stopped
+    environment:
+      - MARIADB_ROOT_PASSWORD=${MARIADB_ROOT_PASSWORD}
+      - MARIADB_DATABASE=${MARIADB_DATABASE}
+      - MARIADB_USER=${MARIADB_USER}
+      - MARIADB_PASSWORD=${MARIADB_PASSWORD}
+      - MARIADB_AUTO_UPGRADE=1
+    command:
+      [
+        "--character-set-server=utf8mb4",
+        "--collation-server=utf8mb4_unicode_ci",
+        "--innodb-file-per-table=1",
+      ]
+    volumes:
+      - mariadb-data-prod:/var/lib/mysql
+    healthcheck:
+      test: [ "CMD", "healthcheck.sh", "--connect", "--innodb_initialized" ]
+      start_period: 1m
+      start_interval: 10s
+      interval: 1m
+      timeout: 5s
+      retries: 3
+
+  adminer:
+    image: adminer:latest
+    container_name: adminer-prod
+    restart: unless-stopped
+    environment:
+      - ADMINER_DEFAULT_SERVER=mariadb
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.pgadmin-prod.rule=Host(`${PGADMIN_HOST}`)"
+      - "traefik.http.routers.pgadmin-prod.entrypoints=websecure"
+      - "traefik.http.routers.pgadmin-prod.tls.certresolver=${ACME_RESOLVER}"
+      - "traefik.http.services.pgadmin-prod.loadbalancer.server.port=8080"
+
+  traccar:
+    image: ${TRACCAR_IMAGE}
+    container_name: traccar-prod
+    restart: unless-stopped
+    depends_on:
+      mariadb:
+        condition: service_healthy
+    ports:
+      - "1883:1883"
+      - "5001-5026:5001-5026"
+      - "5028-5054:5028-5054"
+      - "5056-5079:5056-5079"
+      - "5081-5200:5081-5200"
+    volumes:
+      - traccar-config-prod:/opt/traccar/conf
+      - traccar-data-prod:/opt/traccar/data
+      - traccar-logs-prod:/opt/traccar/logs
+    environment:
+      - TRACCAR_DB_HOST=mariadb
+      - TRACCAR_DB_PORT=3306
+      - TRACCAR_DB_NAME=${MARIADB_DATABASE}
+      - TRACCAR_DB_USER=${MARIADB_USER}
+      - TRACCAR_DB_PASSWORD=${MARIADB_PASSWORD}
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "if [ $$(cut -d'.' -f1 /proc/uptime) -gt 60 ]; then exit 0; else exit 1; fi",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 75s
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.traccar-prod.rule=Host(`${TRACCAR_HOST}`)"
+      - "traefik.http.routers.traccar-prod.entrypoints=websecure"
+      - "traefik.http.routers.traccar-prod.tls.certresolver=${ACME_RESOLVER}"
+      - "traefik.http.routers.traccar-prod.service=traccar-prod-web"
+      - "traefik.http.services.traccar-prod-web.loadbalancer.server.port=8082"
+      - "traefik.tcp.routers.traccar-teltonika-prod.rule=HostSNI(`*`)"
+      - "traefik.tcp.routers.traccar-teltonika-prod.entrypoints=traccar-teltonika"
+      - "traefik.tcp.routers.traccar-teltonika-prod.service=traccar-teltonika-svc-prod"
+      - "traefik.tcp.services.traccar-teltonika-svc-prod.loadbalancer.server.port=5055"
+      - "traefik.tcp.routers.traccar-h02-prod.rule=HostSNI(`*`)"
+      - "traefik.tcp.routers.traccar-h02-prod.entrypoints=traccar-h02"
+      - "traefik.tcp.routers.traccar-h02-prod.service=traccar-h02-svc-prod"
+      - "traefik.tcp.services.traccar-h02-svc-prod.loadbalancer.server.port=5027"
+      - "traefik.tcp.routers.traccar-xxx-prod.rule=HostSNI(`*`)"
+      - "traefik.tcp.routers.traccar-xxx-prod.entrypoints=traccar-xXX"
+      - "traefik.tcp.routers.traccar-xxx-prod.service=traccar-xxx-svc-prod"
+      - "traefik.tcp.services.traccar-xxx-svc-prod.loadbalancer.server.port=5080"
+
+  traccar-forwarder:
+    image: ${FORWARDER_IMAGE}
+    container_name: traccar-forwarder-prod
+    restart: unless-stopped
+    depends_on:
+      traccar:
+        condition: service_healthy
+    volumes:
+      - ./appsettings.prod.json:/app/appsettings.json:ro
+      - ./state-prod:/app/state
+    environment:
+      - ASPNETCORE_ENVIRONMENT=${ASPNETCORE_ENVIRONMENT}
+
+volumes:
+  traefik-data-prod:
+  mariadb-data-prod:
+  traccar-config-prod:
+  traccar-data-prod:
+  traccar-logs-prod:
+
+networks:
+  default:
+    name: traccar-prod-network

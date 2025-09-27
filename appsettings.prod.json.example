@@ -1,0 +1,11 @@
+{
+  "Logging": {
+    "LogLevel": {
+      "Default": "Information"
+    }
+  },
+  "Forwarder": {
+    "Endpoint": "https://smc.socratec.gmbh/api/forward",
+    "ApiKey": "replace_with_prod_api_key"
+  }
+}

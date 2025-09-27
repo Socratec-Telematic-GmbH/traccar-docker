@@ -1,0 +1,75 @@
+name: Build and Deploy Production
+
+on:
+  push:
+    branches: [ "master" ]
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push Traccar (production)
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: Dockerfile.alpine
+          push: true
+          tags: |
+            ghcr.io/socratec-telematic-gmbh/traccar-docker:latest
+            ghcr.io/socratec-telematic-gmbh/traccar-docker:${{ github.sha }}
+
+      # Optional: build forwarder image if present
+      # - name: Build and push Forwarder (production)
+      #   uses: docker/build-push-action@v6
+      #   with:
+      #     context: ./forwarder
+      #     push: true
+      #     tags: |
+      #       ghcr.io/socratec-telematic-gmbh/traccar-forwarder:latest
+      #       ghcr.io/socratec-telematic-gmbh/traccar-forwarder:${{ github.sha }}
+
+      - name: Upload compose and env templates to production host
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.PROD_HOST }}
+          username: ${{ secrets.PROD_USER }}
+          key: ${{ secrets.PROD_SSH_KEY }}
+          source: |
+            docker-compose.prod.yml
+            .env.prod.example
+            appsettings.prod.json.example
+          target: /opt/traccar-prod/
+
+      - name: Deploy on production host
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.PROD_HOST }}
+          username: ${{ secrets.PROD_USER }}
+          key: ${{ secrets.PROD_SSH_KEY }}
+          script: |
+            set -euo pipefail
+            docker login ghcr.io -u "${{ github.actor }}" -p "${{ secrets.GITHUB_TOKEN }}"
+            mkdir -p /opt/traccar-prod
+            cd /opt/traccar-prod
+            if [ ! -f .env.prod ]; then
+              echo "ERROR: Missing .env.prod on host. Create it from .env.prod.example."; exit 1
+            fi
+            docker volume create traefik-data-prod >/dev/null
+            docker compose --env-file .env.prod -f docker-compose.prod.yml pull
+            docker compose --env-file .env.prod -f docker-compose.prod.yml up -d
