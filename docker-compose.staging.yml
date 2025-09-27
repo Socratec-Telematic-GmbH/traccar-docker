@@ -80,7 +80,7 @@ services:
     container_name: traccar-staging
     restart: unless-stopped
     depends_on:
-      mariadb-staging:
+      mariadb:
         condition: service_healthy
     # Device ports (mirror prod, excluding ports handled by Traefik)
     ports:
@@ -137,7 +137,7 @@ services:
     container_name: traccar-forwarder-staging
     restart: unless-stopped
     depends_on:
-      traccar-staging:
+      traccar:
         condition: service_healthy
     volumes:
       - ./appsettings.staging.json:/app/appsettings.json:ro
