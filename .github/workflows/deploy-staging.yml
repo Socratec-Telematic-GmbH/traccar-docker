@@ -51,10 +51,12 @@ jobs:
           key: ${{ secrets.STAGING_SSH_KEY }}
           passphrase: ${{ secrets.STAGING_SSH_PASSPHRASE }}
           source: |
-            docker-compose.staging.yml
-            .env.staging.example
-            appsettings.staging.json.example
+            ./docker-compose.staging.yml
+            ./.env.staging.example
+            ./appsettings.staging.json.example
           target: /opt/traccar-staging/
+          overwrite: true
+          debug: true
 
       - name: Deploy on staging host
         uses: appleboy/ssh-action@v1.2.0
@@ -63,6 +65,7 @@ jobs:
           username: ${{ secrets.STAGING_USER }}
           key: ${{ secrets.STAGING_SSH_KEY }}
           passphrase: ${{ secrets.STAGING_SSH_PASSPHRASE }}
+          debug: true
           script: |
             set -euo pipefail
             docker login ghcr.io -u "${{ github.actor }}" -p "${{ secrets.GITHUB_TOKEN }}"
