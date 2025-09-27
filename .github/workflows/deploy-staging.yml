@@ -1,0 +1,76 @@
+name: Build and Deploy Staging
+
+on:
+  push:
+    branches: [ "staging" ]
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: staging
+      url: https://staging.smc.socratec.gmbh
+
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push Traccar (staging)
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: Dockerfile.alpine
+          push: true
+          tags: ghcr.io/socratec-telematic-gmbh/traccar-docker:staging
+
+      # Optional: build forwarder image if it lives in a subfolder
+      # - name: Build and push Forwarder (staging)
+      #   uses: docker/build-push-action@v6
+      #   with:
+      #     context: ./forwarder
+      #     push: true
+      #     tags: ghcr.io/socratec-telematic-gmbh/traccar-forwarder:staging
+
+      - name: Upload compose and env templates to staging host
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.STAGING_HOST }}
+          username: ${{ secrets.STAGING_USER }}
+          key: ${{ secrets.STAGING_SSH_KEY }}
+          passphrase: ${{ secrets.STAGING_SSH_PASSPHRASE }}
+          source: |
+            docker-compose.staging.yml
+            .env.staging.example
+            appsettings.staging.json.example
+          target: /opt/traccar-staging/
+
+      - name: Deploy on staging host
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.STAGING_HOST }}
+          username: ${{ secrets.STAGING_USER }}
+          key: ${{ secrets.STAGING_SSH_KEY }}
+          passphrase: ${{ secrets.STAGING_SSH_PASSPHRASE }}
+          script: |
+            set -euo pipefail
+            docker login ghcr.io -u "${{ github.actor }}" -p "${{ secrets.GITHUB_TOKEN }}"
+            mkdir -p /opt/traccar-staging
+            cd /opt/traccar-staging
+            if [ ! -f .env.staging ]; then
+              echo "ERROR: Missing .env.staging on host. Create it from .env.staging.example."; exit 1
+            fi
+            docker volume create traefik-data-staging >/dev/null
+            docker compose --env-file .env.staging -f docker-compose.staging.yml pull
+            docker compose --env-file .env.staging -f docker-compose.staging.yml up -d
