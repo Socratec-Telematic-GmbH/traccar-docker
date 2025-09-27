@@ -20,14 +20,6 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: List repo root
-        run: |
-          pwd
-          ls -la
-          [ -f docker-compose.staging.yml ] && echo "OK: docker-compose.staging.yml" || echo "MISSING: docker-compose.staging.yml"
-          [ -f .env.staging.example ] && echo "OK: .env.staging.example" || echo "MISSING: .env.staging.example"
-          [ -f appsettings.staging.json.example ] && echo "OK: appsettings.staging.json.example" || echo "MISSING: appsettings.staging.json.example"
-
       - name: Login to GHCR
         uses: docker/login-action@v3
         with:
@@ -61,7 +53,6 @@ jobs:
           source: docker-compose.staging.yml,.env.staging.example,appsettings.staging.json.example
           target: /opt/traccar-staging/
           overwrite: true
-          debug: true
 
       - name: Deploy on staging host
         uses: appleboy/ssh-action@v1.2.0
@@ -73,7 +64,7 @@ jobs:
           debug: true
           script: |
             set -euo pipefail
-            docker login ghcr.io -u "${{ github.actor }}" -p "${{ secrets.GITHUB_TOKEN }}"
+            echo "${{ secrets.STAGING_GHCR_PAT }}" | docker login ghcr.io -u ${{ secrets.STAGING_GHCR_USER }} --password-stdin
             mkdir -p /opt/traccar-staging
             cd /opt/traccar-staging
             if [ ! -f .env.staging ]; then
