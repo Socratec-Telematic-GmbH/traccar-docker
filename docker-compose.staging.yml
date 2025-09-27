@@ -132,18 +132,18 @@ services:
       - "traefik.tcp.routers.traccar-xxx-staging.service=traccar-xxx-svc-staging"
       - "traefik.tcp.services.traccar-xxx-svc-staging.loadbalancer.server.port=5080"
 
-  traccar-forwarder:
-    image: ${FORWARDER_IMAGE}
-    container_name: traccar-forwarder-staging
-    restart: unless-stopped
-    depends_on:
-      traccar:
-        condition: service_healthy
-    volumes:
-      - ./appsettings.staging.json:/app/appsettings.json:ro
-      - ./state-staging:/app/state
-    environment:
-      - ASPNETCORE_ENVIRONMENT=${ASPNETCORE_ENVIRONMENT}
+#  traccar-forwarder:
+#    image: ${FORWARDER_IMAGE}
+#    container_name: traccar-forwarder-staging
+#    restart: unless-stopped
+#    depends_on:
+#      traccar:
+#        condition: service_healthy
+#    volumes:
+#      - ./appsettings.staging.json:/app/appsettings.json:ro
+#      - ./state-staging:/app/state
+#    environment:
+#      - ASPNETCORE_ENVIRONMENT=${ASPNETCORE_ENVIRONMENT}
 
 volumes:
   traefik-data-staging:
