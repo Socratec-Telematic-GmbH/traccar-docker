@@ -1,0 +1,33 @@
+# --------- Builder Stage ----------
+FROM alpine:3.21 AS builder
+
+WORKDIR /build
+
+# Install build tools (OpenJDK 17 JDK, Maven, Git, unzip)
+RUN set -ex; \
+    apk add --no-cache openjdk17 maven git unzip
+
+# Clone traccar repo and checkout staging branch
+RUN git clone --single-branch --branch staging https://github.com/Socratec-Telematic-GmbH/traccar.git traccar-src
+
+# Build with Maven (skip tests)
+RUN cd traccar-src && \
+    mvn package -DskipTests
+
+# Unpack the resulting zip
+RUN unzip -qo traccar-src/target/tracker-server.zip -d /build/traccar
+
+
+# --------- Runtime Stage ----------
+FROM alpine:3.21
+
+WORKDIR /opt/traccar
+
+# Install only OpenJDK 17 JRE
+RUN apk add --no-cache openjdk17-jre-headless
+
+# Copy build output from builder stage
+COPY --from=builder /build/traccar /opt/traccar
+
+ENTRYPOINT ["java", "-Xms1g", "-Xmx1g", "-Djava.net.preferIPv4Stack=true"]
+CMD ["-jar", "tracker-server.jar", "conf/traccar.xml"]

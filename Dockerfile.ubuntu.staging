@@ -1,0 +1,36 @@
+# --------- Builder Stage ----------
+FROM ubuntu:24.04 AS builder
+
+WORKDIR /build
+
+# Install build tools (OpenJDK 17 JDK, Maven, Git, unzip)
+RUN apt-get update && \
+    DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+        openjdk-17-jdk maven git unzip && \
+    rm -rf /var/lib/apt/lists/*
+
+# Clone traccar repo and checkout staging branch
+RUN git clone --single-branch --branch staging https://github.com/Socratec-Telematic-GmbH/traccar.git traccar-src
+
+# Build with Maven (skip tests)
+RUN cd traccar-src && \
+    mvn package -DskipTests
+
+# Unpack the resulting zip
+RUN unzip -qo traccar-src/target/tracker-server.zip -d /build/traccar
+
+# --------- Runtime Stage ----------
+FROM ubuntu:24.04
+
+WORKDIR /opt/traccar
+
+# Install OpenJDK 17 JRE only
+RUN apt-get update && \
+    DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+        openjdk-17-jre-headless && \
+    rm -rf /var/lib/apt/lists/*
+
+COPY --from=builder /build/traccar /opt/traccar
+
+ENTRYPOINT ["java", "-Xms1g", "-Xmx1g", "-Djava.net.preferIPv4Stack=true"]
+CMD ["-jar", "tracker-server.jar", "conf/traccar.xml"]
