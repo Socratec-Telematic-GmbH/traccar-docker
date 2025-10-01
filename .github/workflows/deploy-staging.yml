@@ -2,7 +2,7 @@ name: Build and Deploy Staging
 
 on:
   push:
-    branches: [ "staging" ]
+    branches: ["staging"]
 
 jobs:
   build-and-deploy:
@@ -31,17 +31,9 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           context: .
-          file: Dockerfile.alpine
+          file: Dockerfile.alpine.staging
           push: true
           tags: ghcr.io/socratec-telematic-gmbh/traccar-docker:staging
-
-      # Optional: build forwarder image if it lives in a subfolder
-      # - name: Build and push Forwarder (staging)
-      #   uses: docker/build-push-action@v6
-      #   with:
-      #     context: ./forwarder
-      #     push: true
-      #     tags: ghcr.io/socratec-telematic-gmbh/traccar-forwarder:staging
 
       - name: Upload compose and env templates to staging host
         uses: appleboy/scp-action@v0.1.7
