@@ -4,13 +4,13 @@ services:
     container_name: traefik-staging
     restart: unless-stopped
     ports:
-      - "80:80"      # HTTP
-      - "443:443"    # HTTPS
-      - "8080:8080"  # Traefik dashboard (exposed via router)
+      - "80:80" # HTTP
+      - "443:443" # HTTPS
+      - "8080:8080" # Traefik dashboard (exposed via router)
       # Device protocol ports (full parity with prod)
-      - "5055:5055"  # Teltonika
-      - "5027:5027"  # H02
-      - "5080:5080"  # xXX
+      - "5055:5055" # Teltonika
+      - "5027:5027" # H02
+      - "5080:5080" # xXX
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - traefik-data-staging:/etc/traefik
@@ -55,7 +55,7 @@ services:
     volumes:
       - mariadb-data-staging:/var/lib/mysql
     healthcheck:
-      test: [ "CMD", "healthcheck.sh", "--connect", "--innodb_initialized" ]
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
       start_period: 1m
       start_interval: 10s
       interval: 1m
@@ -131,6 +131,20 @@ services:
       - "traefik.tcp.routers.traccar-xxx-staging.entrypoints=traccar-xXX"
       - "traefik.tcp.routers.traccar-xxx-staging.service=traccar-xxx-svc-staging"
       - "traefik.tcp.services.traccar-xxx-svc-staging.loadbalancer.server.port=5080"
+
+  traccar-tripimporter:
+    image: ${TRIP_IMPORTER_IMAGE}
+    container_name: traccar-tripimporter-staging
+    restart: unless-stopped
+    depends_on:
+      traccar:
+        condition: service_healthy
+    environment:
+      - DOTNET_ENVIRONMENT=${DOTNET_ENVIRONMENT:-Staging}
+      - ConnectionStrings__Traccar=${TRACCAR_CONNECTION_STRING_STAGING}
+      - Traccar__BaseUrl=${TRACCAR_BASE_URL_STAGING}
+      - Traccar__BearerToken=${TRACCAR_BEARER_TOKEN_STAGING}
+      - ImportDelayInMinutes=${IMPORT_DELAY_MINUTES:-5}
 
 #  traccar-forwarder:
 #    image: ${FORWARDER_IMAGE}
