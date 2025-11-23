@@ -139,12 +139,10 @@ services:
     depends_on:
       traccar:
         condition: service_healthy
+    volumes:
+      - ./appsettings.Staging.json:/app/appsettings.Staging.json:ro
     environment:
       - DOTNET_ENVIRONMENT=${DOTNET_ENVIRONMENT:-Staging}
-      - ConnectionStrings__Traccar=${TRACCAR_CONNECTION_STRING_STAGING}
-      - Traccar__BaseUrl=${TRACCAR_BASE_URL_STAGING}
-      - Traccar__BearerToken=${TRACCAR_BEARER_TOKEN_STAGING}
-      - ImportDelayInMinutes=${IMPORT_DELAY_MINUTES:-5}
 
 #  traccar-forwarder:
 #    image: ${FORWARDER_IMAGE}
@@ -165,6 +163,7 @@ volumes:
   traccar-config-staging:
   traccar-data-staging:
   traccar-logs-staging:
+  traccar-tripimporter-data-staging:
 
 networks:
   default:
