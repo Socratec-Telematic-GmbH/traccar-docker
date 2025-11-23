@@ -65,9 +65,8 @@ jobs:
             echo "${{ secrets.STAGING_GHCR_PAT }}" | docker login ghcr.io -u ${{ secrets.STAGING_GHCR_USER }} --password-stdin
             mkdir -p /opt/traccar-staging
             cd /opt/traccar-staging
-            if [ ! -f .env.staging ]; then
-              echo "ERROR: Missing .env.staging on host. Create it from .env.staging.example."; exit 1
-            fi
+            echo "Creating .env.staging from .env.staging.example"
+            cp .env.staging.example .env.staging
             docker volume create traefik-data-staging >/dev/null
             docker compose --env-file .env.staging -f docker-compose.staging.yml pull
             docker compose --env-file .env.staging -f docker-compose.staging.yml up -d
