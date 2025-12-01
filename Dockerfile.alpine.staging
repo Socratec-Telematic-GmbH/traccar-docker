@@ -1,0 +1,19 @@
+FROM alpine:3.21
+
+ENV TRACCAR_VERSION=preview
+
+WORKDIR /opt/traccar
+
+RUN set -ex; \
+    apk add --no-cache --no-progress \
+    openjdk17-jre-headless \
+    wget \
+    unzip; \
+    wget -qO /tmp/traccar.zip https://socratec-telematic.s3.eu-central-1.amazonaws.com/smc_staging/traccar-other-${TRACCAR_VERSION}.zip; \
+    unzip -qo /tmp/traccar.zip -d /opt/traccar; \
+    rm /tmp/traccar.zip; \
+    apk del wget unzip
+
+ENTRYPOINT ["java", "-Xms1g", "-Xmx1g", "-Djava.net.preferIPv4Stack=true"]
+
+CMD ["-jar", "tracker-server.jar", "conf/traccar.xml"]
