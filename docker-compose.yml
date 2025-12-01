@@ -129,18 +129,30 @@ services:
       - "traefik.tcp.routers.traccar-xXX.service=traccar-xXX-svc"
       - "traefik.tcp.services.traccar-xXX-svc.loadbalancer.server.port=5080"
 
-  traccar-forwarder:
-    image: ghcr.io/socratec-telematic-gmbh/traccar-forwarder:latest
-    container_name: traccar-forwarder
+  traccar-tripimporter:
+    image: ghcr.io/socratec-telematic-gmbh/traccar-tripimporter:main
+    container_name: traccar-tripimporter
     restart: unless-stopped
     depends_on:
       traccar:
         condition: service_healthy
     volumes:
-      - ./appsettings.json:/app/appsettings.json:ro
-      - ./state:/app/state
+      - ./appsettings.Production.json:/app/appsettings.Production.json:ro
     environment:
-      - ASPNETCORE_ENVIRONMENT=Production
+      - DOTNET_ENVIRONMENT=${DOTNET_ENVIRONMENT:-Production}
+
+#  traccar-forwarder:
+#    image: ghcr.io/socratec-telematic-gmbh/traccar-forwarder:latest
+#    container_name: traccar-forwarder
+#    restart: unless-stopped
+#    depends_on:
+#      traccar:
+#        condition: service_healthy
+#    volumes:
+#      - ./appsettings.json:/app/appsettings.json:ro
+#      - ./state:/app/state
+#    environment:
+#      - ASPNETCORE_ENVIRONMENT=Production
 
 volumes:
   traefik-data:
@@ -148,6 +160,7 @@ volumes:
   traccar-config:
   traccar-data:
   traccar-logs:
+  traccar-tripimporter-data:
 
 networks:
   default:
